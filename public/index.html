@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotify App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            color: #1db954;
+        }
+        input[type="text"] {
+            padding: 10px;
+            margin: 10px 0;
+            width: 80%;
+            max-width: 300px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #1db954;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #1ed760;
+        }
+        .result {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <a href="/login">
+        <button>Spotify Premium only</button>
+    </a>
+
+    <div class="result" id="result"></div>
+
+    <h2>Search and Play Tracks</h2>
+    <input type="text" id="searchQuery" placeholder="Enter track name">
+    <button onclick="searchTrack()">Search</button>
+    <button onclick="playTrack()">Play</button>
+
+    <script>
+        async function searchTrack() {
+            const query = document.getElementById('searchQuery').value;
+            if (!query) {
+                alert('Please enter a track name');
+                return;
+            }
+
+            const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
+            const result = await response.json();
+
+            if (result.uri) {
+                document.getElementById('result').innerText = `Track found! URI: ${result.uri}`;
+            } else {
+                document.getElementById('result').innerText = 'No track found.';
+            }
+        }
+
+        async function playTrack() {
+            const uri = document.getElementById('result').innerText.match(/URI: (.+)/)?.[1];
+            if (!uri) {
+                alert('Please search for a track first');
+                return;
+            }
+
+            const response = await fetch(`/play?uri=${encodeURIComponent(uri)}`);
+            const result = await response.text();
+            document.getElementById('result').innerText = result;
+        }
+    </script>
+</body>
+</html>
