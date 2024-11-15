@@ -3,80 +3,256 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotify App</title>
+    <title>Music Player</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
-            text-align: center;
-        }
-        h1 {
-            color: #1db954;
-        }
-        input[type="text"] {
-            padding: 10px;
-            margin: 10px 0;
-            width: 80%;
-            max-width: 300px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            color: white;
-            background-color: #1db954;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #1ed760;
-        }
-        .result {
-            margin-top: 20px;
-        }
+      body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    background-color: #1E1E1E;
+    overflow: hidden;
+}
+
+.background {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center;
+    filter: blur(20px) brightness(0.4);
+    transform: scale(1.1);
+    z-index: -1;
+    transition: background-image 0.5s ease;
+}
+
+.content {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    padding: 20px;
+}
+
+.glass-panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px;
+    position: relative;
+    display: flex;
+    gap: 40px;
+}
+
+.player-info {
+    flex: 1;
+}
+
+.now-playing {
+    color: white;
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.track-info {
+    margin-bottom: 30px;
+}
+
+.track-name {
+    font-size: 2em;
+    font-weight: bold;
+    color: white;
+    margin-bottom: 10px;
+}
+
+.artist-name {
+    font-size: 1.2em;
+    color: #aaa;
+}
+
+.player-controls {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.control-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    color: white;
+    font-size: 1.2em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease;
+}
+
+.control-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.progress-container {
+    width: 100%;
+}
+
+.progress-bar {
+    width: 100%;
+    background: rgba(255, 255, 255, 0.2);
+    height: 4px;
+    border-radius: 2px;
+    cursor: pointer;
+}
+
+.progress {
+    background: white;
+    height: 100%;
+    width: 30%;
+    border-radius: 2px;
+    transition: width 0.1s ease;
+}
+
+.time {
+    display: flex;
+    justify-content: space-between;
+    color: #aaa;
+    font-size: 0.9em;
+    margin-top: 8px;
+}
+
+.artwork-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    perspective: 1000px;
+}
+
+.vinyl {
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    right: -140px;
+    top: 10px;
+    background: radial-gradient(circle at center, 
+        #000000 0%, 
+        #000000 47%,
+        #333333 48%,
+        #000000 49%,
+        #000000 100%
+    );
+    border-radius: 50%;
+    animation: spin 4s linear infinite;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    z-index: 1; /* Keeps the vinyl behind the album art */
+}
+
+.album-art {
+    position: absolute;
+    width: 280px;
+    height: 300px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    z-index: 2; /* Places the album art above the vinyl */
+}
+
+.album-art img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
     </style>
 </head>
 <body>
-    <a href="/login">
-        <button>Spotify Premium only</button>
-    </a>
-
-    <div class="result" id="result"></div>
-
-    <h2>Search and Play Tracks</h2>
-    <input type="text" id="searchQuery" placeholder="Enter track name">
-    <button onclick="searchTrack()">Search</button>
-    <button onclick="playTrack()">Play</button>
+    <div class="background" id="background"></div>
+    <div class="content">
+        <div class="glass-panel">
+            <div class="player-info">
+                <div class="now-playing">Now Playing</div>
+                <div class="track-info">
+                    <div class="track-name" id="trackName"></div>
+                    <div class="artist-name" id="artistName"></div>
+                </div>
+                <div class="player-controls">
+                    <button class="control-button">⇋</button>
+                    <button class="control-button" onclick="skipPrevious()">◀◀</button>
+                    <button class="control-button" onclick="playPause()">▶</button>
+                    <button class="control-button" onclick="skipNext()">▶▶</button>
+                    <button class="control-button">🔁</button>
+                </div>
+                <div class="progress-container">
+                    <div class="progress-bar">
+                        <div class="progress"></div>
+                    </div>
+                    <div class="time">
+                        <span>00:00</span>
+                        <span>00:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="artwork-container">
+                <div class="album-art">
+                    <img id="albumArt" src="/api/placeholder/280/280" alt="Album Art">
+                </div>
+                <div class="vinyl"></div>
+            </div>
+        </div>
+    </div>
 
     <script>
-        async function searchTrack() {
-            const query = document.getElementById('searchQuery').value;
-            if (!query) {
-                alert('Please enter a track name');
-                return;
-            }
+        async function getCurrentPlayingTrack() {
+            try {
+                const response = await fetch('/current-playing');
+                const data = await response.json();
 
-            const response = await fetch(`/search?q=${encodeURIComponent(query)}`);
-            const result = await response.json();
-
-            if (result.uri) {
-                document.getElementById('result').innerText = `Track found! URI: ${result.uri}`;
-            } else {
-                document.getElementById('result').innerText = 'No track found.';
+                if (data.imageUrl) {
+                    document.getElementById('albumArt').src = data.imageUrl;
+                    document.getElementById('background').style.backgroundImage = `url(${data.imageUrl})`;
+                    document.getElementById('trackName').textContent = data.songName || 'Unknown Track';
+                    document.getElementById('artistName').textContent = data.artistName || 'Unknown Artist';
+                }
+            } catch (error) {
+                console.error('Error fetching current playing track:', error);
             }
         }
 
-        async function playTrack() {
-            const uri = document.getElementById('result').innerText.match(/URI: (.+)/)?.[1];
-            if (!uri) {
-                alert('Please search for a track first');
-                return;
+        async function skipPrevious() {
+            try {
+                const response = await fetch('/skip-previous', { method: 'POST' });
+                if (response.ok) {
+                    getCurrentPlayingTrack();
+                }
+            } catch (error) {
+                console.error('Error skipping to the previous track:', error);
             }
-
-            const response = await fetch(`/play?uri=${encodeURIComponent(uri)}`);
-            const result = await response.text();
-            document.getElementById('result').innerText = result;
         }
+
+        async function skipNext() {
+            try {
+                const response = await fetch('/skip-next', { method: 'POST' });
+                if (response.ok) {
+                    getCurrentPlayingTrack();
+                }
+            } catch (error) {
+                console.error('Error skipping to the next track:', error);
+            }
+        }
+
+        setInterval(getCurrentPlayingTrack, 5000);
+        getCurrentPlayingTrack();
     </script>
 </body>
 </html>

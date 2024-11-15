@@ -98,23 +98,66 @@ app.get('/play', async (req, res) => {
     }
 });
 
-// Define a route to get the current playing track's image
 app.get('/current-playing', async (req, res) => {
     try {
         const data = await spotifyApi.getMyCurrentPlayingTrack();
         const currentlyPlaying = data.body;
 
+        console.log('Currently Playing Data:', currentlyPlaying);  // Log the full response
+
         if (currentlyPlaying && currentlyPlaying.item) {
-            const imageUrl = currentlyPlaying.item.album.images[0].url;
-            res.send({ imageUrl });
+            const songName = currentlyPlaying.item.name;
+            const artists = currentlyPlaying.item.artists;
+
+            // Check if artists array exists and has at least one artist
+            const artistName = artists && artists.length > 0 ? artists[0].name : 'Unknown Artist';
+            console.log('Artist Name:', artistName);  // Log artist name for debugging
+
+            const imageUrl = currentlyPlaying.item.album.images.length > 0 ? currentlyPlaying.item.album.images[0].url : null;
+
+            // Get playback state to check for shuffle and repeat
+            const playbackState = await spotifyApi.getMyCurrentPlaybackState();
+            const isShuffle = playbackState.body.shuffle_state;
+            const isRepeat = playbackState.body.repeat_state;
+
+            res.send({
+                songName,
+                artistName,
+                imageUrl,
+                shuffle: isShuffle,
+                repeat: isRepeat
+            });
         } else {
-            res.send('No track is currently playing.');
+            res.send({ message: 'No track is currently playing.' });
         }
     } catch (err) {
         console.error('Error getting current playing track:', err);
-        res.send(`Error getting current playing track: ${err.message}`);
+        res.status(500).send({ error: `Error getting current playing track: ${err.message}` });
     }
 });
+
+
+
+app.post('/skip-previous', async (req, res) => {
+    try {
+        await spotifyApi.skipToPrevious();
+        res.status(200).send('Skipped to previous track');
+    } catch (error) {
+        console.error('Error skipping to previous track:', error);
+        res.status(500).send(`Error skipping to previous track: ${error.message}`);
+    }
+});
+
+app.post('/skip-next', async (req, res) => {
+    try {
+        await spotifyApi.skipToNext();
+        res.status(200).send('Skipped to next track');
+    } catch (error) {
+        console.error('Error skipping to next track:', error);
+        res.status(500).send(`Error skipping to next track: ${error.message}`);
+    }
+});
+
 
 // Start the server
 app.listen(port, () => {
