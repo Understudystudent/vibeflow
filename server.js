@@ -120,12 +120,18 @@ app.get('/current-playing', async (req, res) => {
             const isShuffle = playbackState.body.shuffle_state;
             const isRepeat = playbackState.body.repeat_state;
 
+            // Check if Canvas data is available
+            const canvas = currentlyPlaying.item.canvas;
+            const canvasUrl = canvas ? canvas.url : null;  // Get the Canvas URL if it exists
+
+            // Send response including Canvas URL
             res.send({
                 songName,
                 artistName,
                 imageUrl,
                 shuffle: isShuffle,
-                repeat: isRepeat
+                repeat: isRepeat,
+                canvasUrl  // Return Canvas URL in the response
             });
         } else {
             res.send({ message: 'No track is currently playing.' });
@@ -135,8 +141,6 @@ app.get('/current-playing', async (req, res) => {
         res.status(500).send({ error: `Error getting current playing track: ${err.message}` });
     }
 });
-
-
 
 app.post('/skip-previous', async (req, res) => {
     try {
